@@ -1,6 +1,14 @@
 #include <BluetoothSerial.h>
 
+#define IRON_SENSOR_PIN 4 //we can use buzzer pin to get signals
+#define LED_PIN 5 // if iron found that led will turn off
+
+bool ironFound = false;
+
 // Define motor pins
+
+
+
 const int motor1A = 32 ;
 const int motor1B = 23;
 const int motor1C = 33;
@@ -17,6 +25,8 @@ BluetoothSerial SerialBT;
 void setup() {
   Serial.begin(115200);
   SerialBT.begin("ESP32_BT_Car"); // Bluetooth device name
+  pinMode(IRON_SENSOR_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
 
   // Initialize motor pins for motor drive 1
   pinMode(motor1A, OUTPUT);
@@ -57,6 +67,7 @@ void setup() {
       stopCar();
     }
   }
+  checkIronState();
 }
 
 // Functions to control the car
@@ -166,4 +177,30 @@ void stopCar() {
   digitalWrite(motor2B, LOW);
   digitalWrite(motor2C, LOW);
   digitalWrite(motor2D, LOW);
+}
+// that function for the AI 7 thinker module 
+void checkIronState() {
+  int ironState = digitalRead(IRON_SENSOR_PIN);
+
+  if (ironState == HIGH) {
+    // Iron is found
+    if (!ironFound) {
+      ironFound = true;
+      stopCar();
+      sendTextMessage("Iron is found");
+      delay(2000);
+    }
+  } else {
+    // Iron is not found
+    if (ironFound) {
+      ironFound = false;
+      
+      digitalWrite(LED_PIN, HIGH); // Turn on red LED
+    }
+  }
+}
+
+void sendTextMessage(String message) {
+  // Code to send a text message via GSM module goes here
+  Serial.println(message);
 }
